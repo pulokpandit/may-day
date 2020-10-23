@@ -20,8 +20,16 @@ var scoreTextDisplay = '[NUMBER] PTS'; //score display text
 var streakTextDisplay = '[NUMBER]';
 
 var planeInAirTxtDisplay = 'Aircraft in sky: [NUMBER]';
+var getpointtxtDisplay = '[NUMBER]';
+var tripplesTxtDisplay = 'Tripples: [NUMBER]';
 
 var counter = "";
+var counterStart = "";
+var setIntervalVar = "";
+
+var runwayId = "";
+var tripletCount = 0;
+var noOfTriplet = 0;
 
 var drawStrokeStyle = 4; //drawing stroke number
 var drawStrokeColor = '#fff'; //drawing stroke color
@@ -66,7 +74,7 @@ var shareMessage = 'Level[LEVEL] - [SCORE]PTS is mine new highscore on Flight Si
  * GAME SETTING CUSTOMIZATION END
  *
  */
-var playerData = {score: 0, displayScore: 0, total: 0, streak: 0};
+var playerData = {score: 0, displayScore: 0, total: 0, streak: 0, playTime: 0};
 var gameData = {levelNum: 0, speed: 0, alertTimer: 3, nextPlaneTimer: 6, countPlane: 0, planeInAir: 0, totalPlane: 0, oldX: 0, oldY: 0, lastX: 0, lastY: 0, stageX: 0, stageY: 0, dotDistance: 10, dotted: true, planes: [], runway: [], types: [], typeCount: 0, targetPlane: null, paused: true, stageLevelCompleted: 0, stageComplete: false};
 
 $.editor = {enable: false, runwayNum: 0};
@@ -406,12 +414,20 @@ function startGame() {
     if (BackEndService.play_setup[0].min_stage == 3) {
         streakPointTxt.visible = true;
     }
+    if (BackEndService.play_setup[0].min_stage == 4) {
+        planeInAirTxt.visible = true;
+    }
+    if (BackEndService.play_setup[0].min_stage == 5) {
+        tripplesTxt.visible = true;
+    }
     gameData.speed = levels_arr[gameData.levelNum].level.speed;
     gameData.nextPlaneTimer = levels_arr[gameData.levelNum].level.planTimer;
     gameData.stageComplete = false;
 
     playerData.score = playerData.displayScore = 0;
     playerData.total = 0;
+    playerData.streak = 0;
+    playerData.playTime = new Date();
     updateStatus();
 
     for (var n = 0; n < levels_arr[gameData.levelNum].runway.length; n++) {
@@ -640,6 +656,9 @@ function loopAirplane() {
 
 function endGame() {
     if (!$.editor.enable) {
+        if (setIntervalVar != "") {
+            clearInterval(setIntervalVar);
+        }
         gameData.paused = true;
         TweenMax.killAll();
 
@@ -690,6 +709,9 @@ function endGame() {
 //                goPage('result');
             }});
     } else {
+        if (setIntervalVar != "") {
+            clearInterval(setIntervalVar);
+        }
         if (gameData.stageComplete) {
             toggleGameStatus('Game Completed.');
         } else {
@@ -746,7 +768,7 @@ function checkCreatePlane() {
 function createPlane(type) {
     gameData.countPlane++;
     gameData.planeInAir++;
-    
+
     var newAirplane = $.airplane[type].clone();
     newAirplane.radius = airplane_arr[type].radius;
     newAirplane.speed = airplane_arr[type].speed;
@@ -1302,15 +1324,17 @@ function animatePlanePathComplete(targetAirplane, targetTxt) {
 
     if (targetAirplane.completed) {
         //landed
-        increaseScore(targetAirplane, targetTxt);
+        if (BackEndService.play_setup[0].min_stage != 4) {
+            increaseScore(targetAirplane, targetTxt);
+        }
         increaseTotal();
         if (BackEndService.play_setup[0].min_stage == 3) {
-            increaseStreak(targetTxt);
+            increaseStreak(targetAirplane, targetTxt);
         }
         removePlane(targetAirplane, targetTxt);
         gameData.planeInAir--;
         updateStatus();
-        
+
     } else if (targetAirplane.path.length > 0) {
         //continue path
         //animatePlanePath(targetAirplane);		
@@ -1385,22 +1409,86 @@ function updatePlaneStroke(targetAirplane) {
  */
 function increaseScore(plane, txt) {
     playSound('soundScore');
-    var distanceSpeed = 2 - plane.speed;
-    var distanceTimer = (plane.bonusTimer / 1000) % 60;
-    var bonusTime = 60 - (distanceTimer * distanceSpeed);
-    scoreBonus = Math.floor((bonusTime * 0.01) * scorePoint);
-    scoreBonus = scoreBonus < 0 ? 0 : scoreBonus;
     if (BackEndService.play_setup[0].min_stage == 2) {
         if (txt.bonusTimer < 14000) {
             playerData.score += (BackEndService.play_setup[0].quick_landing_point);
         } else {
             playerData.score += (BackEndService.play_setup[0].normal_landing_point);
         }
-    } 
+    }
     if (BackEndService.play_setup[0].min_stage == 1) {
         playerData.score += (BackEndService.play_setup[0].plan_point);
     }
-    else {
+    if (BackEndService.play_setup[0].min_stage == 4) {
+        switch (gameData.planeInAir) {
+            case 6:
+                playerData.score += 150;
+                getpointtxt.text = getpointtxtDisplay.replace('[NUMBER]', "+150");
+                getpointtxt.visible = true;
+                setTimeout(hidePointTxt, 1000);
+                break;
+            case 7:
+                playerData.score += 175;
+                getpointtxt.text = getpointtxtDisplay.replace('[NUMBER]', "+175");
+                getpointtxt.visible = true;
+                setTimeout(hidePointTxt, 1000);
+                break;
+            case 8:
+                playerData.score += 200;
+                getpointtxt.text = getpointtxtDisplay.replace('[NUMBER]', "+200");
+                getpointtxt.visible = true;
+                setTimeout(hidePointTxt, 1000);
+                break;
+            case 9:
+                playerData.score += 225;
+                getpointtxt.text = getpointtxtDisplay.replace('[NUMBER]', "+225");
+                getpointtxt.visible = true;
+                setTimeout(hidePointTxt, 1000);
+                break;
+            case 10:
+                playerData.score += 250;
+                getpointtxt.text = getpointtxtDisplay.replace('[NUMBER]', "+250");
+                getpointtxt.visible = true;
+                setTimeout(hidePointTxt, 1000);
+                break;
+            case 11:
+                playerData.score += 275;
+                getpointtxt.text = getpointtxtDisplay.replace('[NUMBER]', "+275");
+                getpointtxt.visible = true;
+                setTimeout(hidePointTxt, 1000);
+                break;
+            case 12:
+                playerData.score += 300;
+                getpointtxt.text = getpointtxtDisplay.replace('[NUMBER]', "+300");
+                getpointtxt.visible = true;
+                setTimeout(hidePointTxt, 1000);
+                break;
+        }
+    }
+    if (BackEndService.play_setup[0].min_stage == 5) {
+        if (runwayId === "") {
+            runwayId = plane.runwayNum;
+            tripletCount = 1;
+        } else {
+            if (runwayId == plane.runwayNum) {
+                tripletCount++;
+                if (tripletCount == 2) {
+                    noOfTriplet++;
+                    playerData.score += 500;
+                    tripplesPointTxt.text = getpointtxtDisplay.replace('[NUMBER]', "+500");
+                    tripplesPointTxt.visible = true;
+                    setTimeout(hideTripplesPointTxt, 1000);
+                    tripletCount = 0;
+                    runwayId = "";
+                }
+            } else {
+                runwayId = plane.runwayNum;
+                tripletCount = 1;
+            }
+        }
+        playerData.score += (BackEndService.play_setup[0].normal_landing_point);
+        console.log(runwayId+" "+plane.runwayNum+"   "+tripletCount+" "+noOfTriplet);
+    } else {
         playerData.score += (BackEndService.play_setup[0].normal_landing_point);
     }
     updateStatus();
@@ -1414,7 +1502,7 @@ function increaseTotal() {
         gameData.stageComplete = true;
         endGame();
     }
-    if(playerData.score >= BackEndService.targets.score.value){
+    if (playerData.score >= BackEndService.targets.score.value) {
         gameData.stageComplete = true;
         endGame();
     }
@@ -1447,12 +1535,21 @@ function updateStatus() {
 
 
     streakPointTxt.text = streakTextDisplay.replace('[NUMBER]', 'X' + playerData.streak);
-    
+
     planeInAirTxt.text = planeInAirTxtDisplay.replace('[NUMBER]', gameData.planeInAir);
-    if(gameData.planeInAir>= 10){
-        planeInAirTxt.color = "lightgreen";
+
+    tripplesTxt.text = tripplesTxtDisplay.replace('[NUMBER]', noOfTriplet);
+    if (noOfTriplet > 0) {
+        tripplesTxt.color = "lightgreen";
     }
 
+    if (gameData.planeInAir >= 10) {
+        planeInAirTxt.color = "lightgreen";
+        if (counterStart == "") {
+            setIntervalVar = setInterval(increaseScore, 10000);//"changed"
+            counterStart = 1;
+        }
+    }
     if (playerData.streak >= 3) {
         streakPointTxt.color = "lightgreen";
     } else {
@@ -1588,6 +1685,12 @@ function playSwooshSound() {
     playSound("soundSwoosh");
 }
 
+function hidePointTxt() {
+    getpointtxt.visible = false;
+}
+function hideTripplesPointTxt() {
+    tripplesPointTxt.visible = false;
+}
 //function showPrizePopup() {
 //    
 //            var endPanel = new CWinPrizePanel(isWin);

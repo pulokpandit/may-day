@@ -408,7 +408,31 @@ function buildGameCanvas() {
     planeInAirTxt.textAlign = "center";
     planeInAirTxt.textBaseline = 'alphabetic';
     planeInAirTxt.text = 'Aircraft in sky: 4';
-    //planeInAirTxt.visible = false;
+    planeInAirTxt.visible = false;
+    
+    tripplesTxt = new createjs.Text();
+    tripplesTxt.font = "30px Rubik-Bold";
+    tripplesTxt.color = "#fff";
+    tripplesTxt.textAlign = "center";
+    tripplesTxt.textBaseline = 'alphabetic';
+    tripplesTxt.text = 'Tripples: 4';
+    tripplesTxt.visible = false;
+    
+    tripplesPointTxt = new createjs.Text();
+    tripplesPointTxt.font = "20px Rubik-Bold";
+    tripplesPointTxt.color = "lightgreen";
+    tripplesPointTxt.textAlign = "center";
+    tripplesPointTxt.textBaseline = 'alphabetic';
+    tripplesPointTxt.text = '+125';
+    tripplesPointTxt.visible = false;
+    
+    getpointtxt = new createjs.Text();
+    getpointtxt.font = "20px Rubik-Bold";
+    getpointtxt.color = "lightgreen";
+    getpointtxt.textAlign = "center";
+    getpointtxt.textBaseline = 'alphabetic';
+    getpointtxt.text = '+125';
+    getpointtxt.visible = false;
 
     itemCompleted = new createjs.Bitmap(loader.getResult('itemCompleted'));
     centerReg(itemCompleted);
@@ -713,7 +737,7 @@ function buildGameCanvas() {
     }
 
     mainContainer.addChild(topIcon, logo, buttonStart);
-    statusContainer.addChild(landedShadowTxt, landedTxt, scoreShadowTxt, scoreTxt, streakPointTxt, planeInAirTxt);
+    statusContainer.addChild(landedShadowTxt, landedTxt, scoreShadowTxt, scoreTxt, streakPointTxt, planeInAirTxt, getpointtxt, tripplesTxt, tripplesPointTxt);
     gameContainer.addChild(itemAlert, itemCollisionOuter, itemCollisionInner, itemSquare, itemHelipadHit, itemHelipadGuide, itemRunwayHit, itemRunwayGuide, levelContainer, editContainer, runwayContainer, collisionContainer, linesContainer, planeContainer, itemBoom, completeContainer, statusContainer, topIconGame);
     resultContainer.addChild(itemResult, resultTitleTxt, resultScoreTxt, buttonContinue);
 
@@ -750,7 +774,15 @@ function resizeCanvas() {
         
         planeInAirTxt.x = canvasW - 250;
         planeInAirTxt.y = offset.y + 120;
-
+        
+        getpointtxt.x = canvasW - 200;
+        getpointtxt.y = offset.y + 150;
+        
+        tripplesPointTxt.x = canvasW - 200;
+        tripplesPointTxt.y = offset.y + 150;
+        
+        tripplesTxt.x = canvasW - 250;
+        tripplesTxt.y = offset.y + 120;
 
 //        buttonSettings.x = (canvasW - offset.x) - 60;
 //        buttonSettings.y = offset.y + 45;
