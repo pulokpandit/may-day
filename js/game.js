@@ -9,8 +9,19 @@
  */
 
 var scorePoint = 50; //score point per plane
+var scorePointBeforeTimer = 75;
+
+var scorePoint3 = 100;
+var bonusPoint3 = 20;
+
 var landedTextDisplay = 'LANDED: [NUMBER]/[TOTAL]'; //landed display text
 var scoreTextDisplay = '[NUMBER] PTS'; //score display text
+
+var streakTextDisplay = '[NUMBER]';
+
+var planeInAirTxtDisplay = 'Aircraft in sky: [NUMBER]';
+
+var counter = "";
 
 var drawStrokeStyle = 4; //drawing stroke number
 var drawStrokeColor = '#fff'; //drawing stroke color
@@ -55,8 +66,8 @@ var shareMessage = 'Level[LEVEL] - [SCORE]PTS is mine new highscore on Flight Si
  * GAME SETTING CUSTOMIZATION END
  *
  */
-var playerData = {score: 0, displayScore: 0, total: 0};
-var gameData = {levelNum: 0, speed: 0, alertTimer: 3, nextPlaneTimer: 6, countPlane: 0, totalPlane: 0, oldX: 0, oldY: 0, lastX: 0, lastY: 0, stageX: 0, stageY: 0, dotDistance: 10, dotted: true, planes: [], runway: [], types: [], typeCount: 0, targetPlane: null, paused: true, stageLevelCompleted: 0, stageComplete: false};
+var playerData = {score: 0, displayScore: 0, total: 0, streak: 0};
+var gameData = {levelNum: 0, speed: 0, alertTimer: 3, nextPlaneTimer: 6, countPlane: 0, planeInAir: 0, totalPlane: 0, oldX: 0, oldY: 0, lastX: 0, lastY: 0, stageX: 0, stageY: 0, dotDistance: 10, dotted: true, planes: [], runway: [], types: [], typeCount: 0, targetPlane: null, paused: true, stageLevelCompleted: 0, stageComplete: false};
 
 $.editor = {enable: false, runwayNum: 0};
 
@@ -71,7 +82,8 @@ var cookieName = 'FlightSim2017';
 function retrieveLevelData() {
     var curStage = Cookies.get(cookieName);
     if (curStage != undefined) {
-        gameData.stageLevelCompleted = Number(curStage);
+//        gameData.stageLevelCompleted = Number(curStage);
+        gameData.stageLevelCompleted = 10;
     }
 }
 
@@ -107,9 +119,12 @@ function buildGameButton() {
         result.then(function (data) {
             if (data.error_url == "")
             {
-                if (Number(evt.target.name) > 0) {
-                    playSound('soundClick');
-                    gameData.levelNum = Number(evt.target.name);
+                playSound('soundClick');
+                if (Number(BackEndService.play_setup[0].min_stage) <= 1) {
+                    gameData.levelNum = 1;
+                    goPage('game');
+                } else {
+                    gameData.levelNum = Number(BackEndService.play_setup[0].min_stage) - 1;
                     goPage('game');
                 }
             } else
@@ -223,6 +238,7 @@ function buildSelectLevel() {
         $.selectStage['icon_' + n].addEventListener("mousedown", function (evt) {
             if (Number(evt.target.name) <= gameData.stageLevelCompleted) {
                 playSound('soundClick');
+//                gameData.levelNum = Number(evt.target.name);
                 gameData.levelNum = Number(evt.target.name);
                 goPage('game');
             }
@@ -374,12 +390,22 @@ function startGame() {
     }
 
     gameData.planes = [];
-//    gameData.timerTxt = [];
+    gameData.timerTxt = [];
     gameData.runway = [];
     gameData.types = [];
     gameData.typeCount = 0;
     gameData.countPlane = 0;
-    gameData.totalPlane = levels_arr[gameData.levelNum].level.total;
+    gameData.planeInAir = 0;
+    if (BackEndService.play_setup[0].min_stage == 1) {
+        gameData.totalPlane = levels_arr[gameData.levelNum].level.total;
+        landedTxt.visible = true;
+        landedShadowTxt.visible = true;
+    } else {
+        gameData.totalPlane = 9999;
+    }
+    if (BackEndService.play_setup[0].min_stage == 3) {
+        streakPointTxt.visible = true;
+    }
     gameData.speed = levels_arr[gameData.levelNum].level.speed;
     gameData.nextPlaneTimer = levels_arr[gameData.levelNum].level.planTimer;
     gameData.stageComplete = false;
@@ -461,7 +487,7 @@ function loopAirplane() {
     var nowDate = new Date();
     for (var n = 0; n < gameData.planes.length; n++) {
         var curAirplane = gameData.planes[n];
-        //var curTimerTxt = gameData.timerTxt[n];
+        var curTimerTxt = gameData.timerTxt[n]; //added pulok
 
         if (curAirplane.active) {
             curAirplane.collisionOuter.visible = false;
@@ -470,16 +496,25 @@ function loopAirplane() {
             if (curAirplane.bonusTimer < 60000) {
                 curAirplane.bonusTimer = nowDate.getTime() - curAirplane.bonusStartTimer.getTime();
             }
+            if (curTimerTxt.bonusTimer < 14000) {
+                if (BackEndService.play_setup[0].min_stage == 2)
+                {
+                    curTimerTxt.bonusTimer = nowDate.getTime() - curTimerTxt.bonusStartTimer.getTime();
+                    curTimerTxt.text = Math.round(14 - curTimerTxt.bonusTimer / 1000);
+                }
+            } else {
+                curTimerTxt.text = "";
+            }
         }
     }
 
     for (var n = 0; n < gameData.planes.length; n++) {
         var curAirplane = gameData.planes[n];
-
+        var curTimerTxt = gameData.timerTxt[n];// added pulok
         if (curAirplane.active) {
             var curRadius = curAirplane.radius;
             if (curAirplane.path.length > 0 && !curAirplane.pathed) {
-                animatePlanePath(curAirplane);
+                animatePlanePath(curAirplane, curTimerTxt);
 //                animatePlanePath(curTimerTxt);
 
             }
@@ -527,7 +562,7 @@ function loopAirplane() {
                         curAirplane.landed = false;
                         curAirplane.completed = false;
                         updatePlaneStroke(curAirplane);
-                        animatePlanePath(curAirplane);
+                        animatePlanePath(curAirplane, curTimerTxt);
 //                        animatePlanePath(curTimerTxt);
 
 
@@ -644,7 +679,7 @@ function endGame() {
                             }
                             var endPanel = new CEndPanel(isWin);
                             endPanel.show(isWin);
-                            
+
                         }
                     } else
                     {
@@ -674,6 +709,7 @@ function removeObjects() {
         var curAirplane = gameData.planes[n];
         if (curAirplane.destroy) {
             gameData.planes.splice(n, 1);
+            gameData.timerTxt.splice(n, 1);
             n = gameData.planes.length;
         }
     }
@@ -709,7 +745,8 @@ function checkCreatePlane() {
  */
 function createPlane(type) {
     gameData.countPlane++;
-
+    gameData.planeInAir++;
+    
     var newAirplane = $.airplane[type].clone();
     newAirplane.radius = airplane_arr[type].radius;
     newAirplane.speed = airplane_arr[type].speed;
@@ -733,40 +770,39 @@ function createPlane(type) {
     newAirplane.alert = newAlert;
     //timer text start
 
-//    var newTxt = new createjs.Text('timer', '20px Rubik-Regular', 'red');
-//    newTxt.radius = airplane_arr[type].radius;
-//    newTxt.speed = airplane_arr[type].speed;
-//    newTxt.scaleNum = 1;
-//    newTxt.path = [];
-//    newTxt.active = false;
-//    newTxt.destroy = false;
-//    newTxt.pathed = false;
-//    newTxt.landed = false;
-//    newTxt.completed = false;
-//    newTxt.planeType = type;
-//    newTxt.timer = 0;
-//    newTxt.alpha = 0;
-//    newTxt.bonusStartTimer = new Date();
-//    newTxt.bonusTimer = 0;
-//    newTxt.collisionSound = false;
-//    newTxt.isAlert = false;
-//    newTxt.countPlane = gameData.countPlane;
+    var newTxt = new createjs.Text("", '30px Rubik-Regular', 'lightgreen');
+    newTxt.radius = airplane_arr[type].radius;
+    newTxt.speed = airplane_arr[type].speed;
+    newTxt.scaleNum = 1;
+    newTxt.path = [];
+    newTxt.active = false;
+    newTxt.destroy = false;
+    newTxt.pathed = false;
+    newTxt.landed = false;
+    newTxt.completed = false;
+    newTxt.timer = 0;
+    newTxt.alpha = 0;
+    newTxt.bonusStartTimer = new Date();
+    newTxt.bonusTimer = 0;
+    newTxt.collisionSound = false;
+    newTxt.isAlert = false;
 
 
     //end
 
     var position = getRandomPosition(newAirplane.radius);
+
     newAirplane.x = position.x;
     newAirplane.y = position.y;
     newAirplane.oldX = position.x;
     newAirplane.oldY = position.y;
     newAirplane.stuckTimer = 100;
-    
-//    newTxt.x = newAirplane.x + 10;
-//    newTxt.y = newAirplane.y + 10;
-//    newTxt.oldX = newAirplane.x + 10;
-//    newTxt.oldY = newAirplane.y + 10;
-//    newTxt.stuckTimer = 100;
+
+    newTxt.x = newAirplane.x + 50;
+    newTxt.y = newAirplane.y + 20;
+    newTxt.oldX = newAirplane.x + 50;
+    newTxt.oldY = newAirplane.y + 20;
+    newTxt.stuckTimer = 100;
 
     var alertPosition = getAlertPos(position.x, position.y);
     newAirplane.alert.x = alertPosition.x;
@@ -779,11 +815,11 @@ function createPlane(type) {
 
 
     gameData.planes.push(newAirplane);
-    //gameData.timerTxt.push(newTxt);//edit by pulok
+    gameData.timerTxt.push(newTxt);//edit by pulok
 
 
 
-    planeContainer.addChild(newAirplane, newAlert);
+    planeContainer.addChild(newAirplane, newAlert, newTxt);
 
     var collisionOuter = itemCollisionOuter.clone();
     var collisionInner = itemCollisionInner.clone();
@@ -802,20 +838,21 @@ function createPlane(type) {
     });
 
     //delay
-    TweenMax.to(newAirplane, 0, {delay: gameData.alertTimer, overwrite: true, onComplete: movePlane, onCompleteParams: [newAirplane]});
+    TweenMax.to([newAirplane, newTxt], 0, {delay: gameData.alertTimer, overwrite: true, onComplete: movePlane, onCompleteParams: [newAirplane, newTxt]});
+    updateStatus();
 }
 
-function movePlane(plane) {
+function movePlane(plane, txt) {
     plane.active = true;
     plane.alpha = 1;
     plane.startTimer = new Date();
 
-//    txt.active = true;
-//    txt.alpha = 1;
-//    txt.startTimer = new Date();
+    txt.active = true;
+    txt.alpha = 1;
+    txt.startTimer = new Date();
 
     planeContainer.removeChild(plane.alert);
-    animatePlaneRandomPos(plane, false, 'center');
+    animatePlaneRandomPos(plane, txt, false, 'center');
 }
 
 function getRandomPosition(radius, to) {
@@ -884,15 +921,22 @@ function getAnglePosition(x1, y1, radius, angle) {
  * REMOVE PLANE - This is the function that run to remove plane
  * 
  */
-function removePlane(targetAirplane) {
+function removePlane(targetAirplane, targetTxt) {
     targetAirplane.active = false;
     targetAirplane.destroy = true;
-    TweenMax.killTweensOf(targetAirplane);
+
+    targetAirplane.active = false;
+    targetAirplane.destroy = true;
+
+    TweenMax.killTweensOf([targetAirplane, targetTxt]);
+
+
     targetAirplane.collisionOuter.visible = false;
     targetAirplane.collisionInner.visible = false;
 
     linesContainer.removeChild(targetAirplane.drawingStroke);
     planeContainer.removeChild(targetAirplane);
+    planeContainer.removeChild(targetTxt);
     collisionContainer.addChild(targetAirplane.collisionOuter, targetAirplane.collisionInner);
 }
 
@@ -901,7 +945,7 @@ function removePlane(targetAirplane) {
  * ANIMATE PLANE RANDOM POSITION - This is the function that run to animate random position
  * 
  */
-function animatePlaneRandomPos(plane, con, to) {
+function animatePlaneRandomPos(plane, txt, con, to) {
     plane.path = [];
     plane.runwayNum = -1;
     plane.runwayGuide = -1;
@@ -911,15 +955,15 @@ function animatePlaneRandomPos(plane, con, to) {
     plane.timer = 200;
 
     //txt added 
-//    txt.path = [];
-//    txt.runwayNum = -1;
-//    txt.runwayGuide = -1;
-//    txt.runwayGuidePlane = -1;
-//    txt.runwayType = -1;
-//    txt.pathed = false;
-//    txt.timer = 200;
+    txt.path = [];
+    txt.runwayNum = -1;
+    txt.runwayGuide = -1;
+    txt.runwayGuidePlane = -1;
+    txt.runwayType = -1;
+    txt.pathed = false;
+    txt.timer = 200;
 
-    updatePlaneStroke(plane);
+    updatePlaneStroke(plane);//left only
 
     var position;
     var continueTween = false;
@@ -942,7 +986,7 @@ function animatePlaneRandomPos(plane, con, to) {
     pathArray.push({x: plane.x, y: plane.y});
     pathArray.push({x: newX, y: newY});
 
-    TweenMax.to(plane, speedTween, {bezier: {type: "thru", values: pathArray, curviness: 0, autoRotate: true}, overwrite: true, ease: Linear.easeNone, onComplete: animatePlaneRandomPos, onCompleteParams: [plane, continueTween]});
+    TweenMax.to([plane, txt], speedTween, {bezier: {type: "thru", values: pathArray, curviness: 0, autoRotate: true}, overwrite: true, ease: Linear.easeNone, onComplete: animatePlaneRandomPos, onCompleteParams: [plane, txt, continueTween]});
 
 //    TweenMax.to(txt, speedTween, {bezier: {type: "thru", values: pathArray, curviness: 0, autoRotate: true}, overwrite: true, ease: Linear.easeNone, onComplete: animatePlaneRandomPos, onCompleteParams: [plane, continueTween]});
 }
@@ -1194,7 +1238,7 @@ function moveAirplanePath() {
  * 
  */
 //edit by pulok
-function animatePlanePath(targetAirplane) {
+function animatePlanePath(targetAirplane, targetTxt) {
     if (targetAirplane.path.length > 0 && !targetAirplane.pathed) {
         targetAirplane.pathed = true;
         var newX = targetAirplane.path[0].x;
@@ -1248,25 +1292,31 @@ function animatePlanePath(targetAirplane) {
         }
 
         var scaleNum = targetAirplane.scaleNum;
-		TweenMax.to(targetAirplane, speedTween, {bezier:{type:"thru", values:pathArray, curviness:1, autoRotate:true}, alpha:alphaNum, scaleX:scaleNum, scaleY:scaleNum, overwrite:true, ease:Linear.easeNone, onComplete:animatePlanePathComplete, onCompleteParams:[targetAirplane]});
+        TweenMax.to([targetAirplane, targetTxt], speedTween, {bezier: {type: "thru", values: pathArray, curviness: 1, autoRotate: true}, alpha: alphaNum, scaleX: scaleNum, scaleY: scaleNum, overwrite: true, ease: Linear.easeNone, onComplete: animatePlanePathComplete, onCompleteParams: [targetAirplane, targetTxt]});
     }
 }
 
-function animatePlanePathComplete(targetAirplane) {
+function animatePlanePathComplete(targetAirplane, targetTxt) {
     updatePlaneStroke(targetAirplane);
     targetAirplane.pathed = false;
 
     if (targetAirplane.completed) {
         //landed
-        increaseScore(targetAirplane);
+        increaseScore(targetAirplane, targetTxt);
         increaseTotal();
-        removePlane(targetAirplane);
+        if (BackEndService.play_setup[0].min_stage == 3) {
+            increaseStreak(targetTxt);
+        }
+        removePlane(targetAirplane, targetTxt);
+        gameData.planeInAir--;
+        updateStatus();
+        
     } else if (targetAirplane.path.length > 0) {
         //continue path
         //animatePlanePath(targetAirplane);		
     } else {
         //lost
-        animatePlaneRandomPos(targetAirplane, true);
+        animatePlaneRandomPos(targetAirplane, targetTxt, true);
     }
 }
 
@@ -1333,17 +1383,25 @@ function updatePlaneStroke(targetAirplane) {
  * UPDATE GAME STATUS - This is the function that runs to update game score status
  * 
  */
-function increaseScore(plane) {
+function increaseScore(plane, txt) {
     playSound('soundScore');
     var distanceSpeed = 2 - plane.speed;
     var distanceTimer = (plane.bonusTimer / 1000) % 60;
     var bonusTime = 60 - (distanceTimer * distanceSpeed);
     scoreBonus = Math.floor((bonusTime * 0.01) * scorePoint);
     scoreBonus = scoreBonus < 0 ? 0 : scoreBonus;
-    if (gameData.levelNum == 1) {
-        playerData.score += (scorePoint);
-    } else {
-        playerData.score += (scorePoint + scoreBonus);
+    if (BackEndService.play_setup[0].min_stage == 2) {
+        if (txt.bonusTimer < 14000) {
+            playerData.score += (BackEndService.play_setup[0].quick_landing_point);
+        } else {
+            playerData.score += (BackEndService.play_setup[0].normal_landing_point);
+        }
+    } 
+    if (BackEndService.play_setup[0].min_stage == 1) {
+        playerData.score += (BackEndService.play_setup[0].plan_point);
+    }
+    else {
+        playerData.score += (BackEndService.play_setup[0].normal_landing_point);
     }
     updateStatus();
 }
@@ -1356,12 +1414,52 @@ function increaseTotal() {
         gameData.stageComplete = true;
         endGame();
     }
+    if(playerData.score >= BackEndService.targets.score.value){
+        gameData.stageComplete = true;
+        endGame();
+    }
+}
+
+function increaseStreak() {
+    var timeToLand = 0;
+    var nowDate = new Date();
+    if (counter == "") {
+        counter = nowDate;
+    } else {
+        timeToLand = nowDate.getTime() - counter.getTime();
+    }
+    if (timeToLand <= 6000 || (timeToLand <= 3000 && playerData.streak >= 3)) {
+        playerData.streak++;
+        if (playerData.streak >= 3) {
+            playerData.score += 120 + 20 * (playerData.streak - 3);
+        }
+    } else {
+        counter = "";
+        playerData.streak = 0;
+    }
+    updateStatus();
 }
 
 function updateStatus() {
     var landedText = landedTextDisplay.replace('[NUMBER]', playerData.total);
     landedTxt.text = landedShadowTxt.text = landedText.replace('[TOTAL]', gameData.totalPlane);
     scoreTxt.text = scoreShadowTxt.text = scoreTextDisplay.replace('[NUMBER]', playerData.score);
+
+
+    streakPointTxt.text = streakTextDisplay.replace('[NUMBER]', 'X' + playerData.streak);
+    
+    planeInAirTxt.text = planeInAirTxtDisplay.replace('[NUMBER]', gameData.planeInAir);
+    if(gameData.planeInAir>= 10){
+        planeInAirTxt.color = "lightgreen";
+    }
+
+    if (playerData.streak >= 3) {
+        streakPointTxt.color = "lightgreen";
+    } else {
+        streakPointTxt.color = "#fff";
+    }
+
+
     var result = BackEndService.gameResult(gameData);
     result.then(function (data) {
         if (data.error_url == "")

@@ -431,6 +431,7 @@ var Fireworks = function(canvas) {
     self.particles = [];
     self.fireworks = [];
     self.ctx.clearRect(0, 0, self.cw, self.ch);
+//    canvas.style.display = "none";
   };
 
   /*=============================================================================*/
@@ -464,6 +465,7 @@ var Fireworks = function(canvas) {
   self.init();
 
   self.showFireworks = function(x, y, width, height, count) {
+//      canvas.style.display = "block";
     var c = count;
     while (c--) {
       var xPos = rand(x, width + x);

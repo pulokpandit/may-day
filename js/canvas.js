@@ -17,8 +17,13 @@ function initGameCanvas(w, h) {
     gameCanvas.top = -50;
     canvasW = w;
     canvasH = h;
-
-//    fireWorks = new Fireworks(gameCanvas);
+    var particleCanvas = document.getElementById("particle-canvas");
+    particleCanvas.width =  w;
+    particleCanvas.height = h;
+    particleCanvas.top = -50;
+    canvasW = w;
+    canvasH = h;
+    fireWorks = new Fireworks(particleCanvas);
     
     stage = new createjs.Stage("gameCanvas");
 
@@ -341,6 +346,7 @@ function buildGameCanvas() {
     itemHelipadAnimate.framerate = 20;
     itemHelipadAnimate.x = -100;
 
+
     gameContainer.addChild(itemRunwayAnimate, itemHelipadAnimate);
 
     itemAlert = new createjs.Bitmap(loader.getResult('itemAlert'));
@@ -358,37 +364,56 @@ function buildGameCanvas() {
     itemBoom.x = -100;
 
     landedTxt = new createjs.Text();
-    landedTxt.font = "50px dimboregular";
+    landedTxt.font = "30px Rubik-Black";
     landedTxt.color = "#fff";
     landedTxt.textAlign = "left";
     landedTxt.textBaseline = 'alphabetic';
     landedTxt.text = 'LANDED: 10';
+    landedTxt.visible = false;
 
     landedShadowTxt = new createjs.Text();
-    landedShadowTxt.font = "50px dimboregular";
+    landedShadowTxt.font = "30px Rubik-Black";
     landedShadowTxt.color = "#555555";
     landedShadowTxt.textAlign = "left";
     landedShadowTxt.textBaseline = 'alphabetic';
     landedShadowTxt.text = 'LANDED: 10';
+    landedShadowTxt.visible = false;
 
     scoreTxt = new createjs.Text();
-    scoreTxt.font = "60px dimboregular";
+    scoreTxt.font = "40px Rubik-Black";
     scoreTxt.color = "#fff";
     scoreTxt.textAlign = "center";
     scoreTxt.textBaseline = 'alphabetic';
     scoreTxt.text = '1500PTS';
 
     scoreShadowTxt = new createjs.Text();
-    scoreShadowTxt.font = "55px dimboregular";
+    scoreShadowTxt.font = "35px Rubik-Black";
     scoreShadowTxt.color = "#555555";
     scoreShadowTxt.textAlign = "center";
     scoreShadowTxt.textBaseline = 'alphabetic';
     scoreShadowTxt.text = '1500PTS';
+    
+    
+    streakPointTxt = new createjs.Text();
+    streakPointTxt.font = "30px Rubik-Bold";
+    streakPointTxt.color = "#fff";
+    streakPointTxt.textAlign = "center";
+    streakPointTxt.textBaseline = 'alphabetic';
+    streakPointTxt.text = 'X1';
+    streakPointTxt.visible = false;
+    
+    planeInAirTxt = new createjs.Text();
+    planeInAirTxt.font = "20px Rubik-Bold";
+    planeInAirTxt.color = "#fff";
+    planeInAirTxt.textAlign = "center";
+    planeInAirTxt.textBaseline = 'alphabetic';
+    planeInAirTxt.text = 'Aircraft in sky: 4';
+    //planeInAirTxt.visible = false;
 
     itemCompleted = new createjs.Bitmap(loader.getResult('itemCompleted'));
     centerReg(itemCompleted);
     levelCompletedTxt = new createjs.Text();
-    levelCompletedTxt.font = "60px dimboregular";
+    levelCompletedTxt.font = "60px Rubik-Blackr";
     levelCompletedTxt.color = "#fff";
     levelCompletedTxt.textAlign = "center";
     levelCompletedTxt.textBaseline = 'alphabetic';
@@ -405,7 +430,7 @@ function buildGameCanvas() {
     itemResult.y = canvasH / 2;
 
     resultTitleTxt = new createjs.Text();
-    resultTitleTxt.font = "50px dimboregular";
+    resultTitleTxt.font = "50px Rubik-Black";
     resultTitleTxt.color = "#fff";
     resultTitleTxt.textAlign = "center";
     resultTitleTxt.textBaseline = 'alphabetic';
@@ -414,7 +439,7 @@ function buildGameCanvas() {
     resultTitleTxt.y = canvasH / 100 * 30;
 
     resultScoreTxt = new createjs.Text();
-    resultScoreTxt.font = "100px dimboregular";
+    resultScoreTxt.font = "100px Rubik-Black";
     resultScoreTxt.color = "#663366";
     resultScoreTxt.textAlign = "center";
     resultScoreTxt.textBaseline = 'alphabetic';
@@ -423,7 +448,7 @@ function buildGameCanvas() {
     resultScoreTxt.y = canvasH / 100 * 46;
 
     resultShareTxt = new createjs.Text();
-    resultShareTxt.font = "25px dimboregular";
+    resultShareTxt.font = "25px Rubik-Black";
     resultShareTxt.color = "#555";
     resultShareTxt.textAlign = "center";
     resultShareTxt.textBaseline = 'alphabetic';
@@ -650,7 +675,7 @@ function buildGameCanvas() {
     centerReg(buttonStartIns);
     buttonStartIns.x = canvasW / 100 * 50;
     buttonStartIns.y = canvasH / 100 * 75;
-    buttonStartIns.name = 1; //@to edit the game level pulok
+//    buttonStartIns.name = BackEndService.play_setup; //@to edit the game level pulok
     pulseAnimation(buttonStartIns);
 
     popupContainer.addChild(buttonStartIns, topIconPopup);
@@ -688,7 +713,7 @@ function buildGameCanvas() {
     }
 
     mainContainer.addChild(topIcon, logo, buttonStart);
-    statusContainer.addChild(landedShadowTxt, landedTxt, scoreShadowTxt, scoreTxt);
+    statusContainer.addChild(landedShadowTxt, landedTxt, scoreShadowTxt, scoreTxt, streakPointTxt, planeInAirTxt);
     gameContainer.addChild(itemAlert, itemCollisionOuter, itemCollisionInner, itemSquare, itemHelipadHit, itemHelipadGuide, itemRunwayHit, itemRunwayGuide, levelContainer, editContainer, runwayContainer, collisionContainer, linesContainer, planeContainer, itemBoom, completeContainer, statusContainer, topIconGame);
     resultContainer.addChild(itemResult, resultTitleTxt, resultScoreTxt, buttonContinue);
 
@@ -719,6 +744,12 @@ function resizeCanvas() {
         scoreShadowTxt.x = scoreTxt.x
         scoreTxt.y = offset.y + 60;
         scoreShadowTxt.y = scoreTxt.y + 5;
+        
+        streakPointTxt.x = canvasW - 200;
+        streakPointTxt.y = offset.y + 120;
+        
+        planeInAirTxt.x = canvasW - 250;
+        planeInAirTxt.y = offset.y + 120;
 
 
 //        buttonSettings.x = (canvasW - offset.x) - 60;

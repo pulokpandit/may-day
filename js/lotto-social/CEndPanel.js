@@ -7,18 +7,18 @@ function CEndPanel(isWin) {
     var buttonCross;
     var iconScore, iconTarget1, iconRestric;
     var scaleFactor = 0.1;
-    var fireworks;
+//    var fireworks;
 
     this._init = function (isWin) {
 
 //        var CWinPrizePanel = new CWinPrizePanel(isWin);
-        var gameCanvas = document.getElementById("gameCanvas");
-        gameCanvas.width =  1280;
-        gameCanvas.height = 768;
-        gameCanvas.top = -50;
-        canvasW = 1280;
-        canvasH = 768;
-        fireWorks = new Fireworks(gameCanvas);
+//        var gameCanvas = document.getElementById("gameCanvas");
+//        gameCanvas.width =  1280;
+//        gameCanvas.height = 768;
+//        gameCanvas.top = -50;
+//        canvasW = 1280;
+//        canvasH = 768;
+//        fireWorks = new Fireworks(gameCanvas);
 
         container = new createjs.Container();
         container.alpha = 0;
@@ -288,7 +288,12 @@ function CEndPanel(isWin) {
 //        pulseAnimation(buttonFinish);
         pulseAnimation(buttonReplay);
         pulseAnimation(buttonNextlevel);
-        this.showFireworks();
+        var x = canvasW / 2 - 200;
+        var y = canvasH / 2 - 250;
+        var width = 400;
+        var height = 0;
+        fireWorks.showFireworks(x, y, width, height, 20);
+//        canvas.style.display = "block";
     };
 
     this.playEndSound = function () {
@@ -328,7 +333,7 @@ function CEndPanel(isWin) {
         }
     };
 
-    this.showFireworks = function () {
+    this.showanimation = function () {
         var x = canvasW / 2 - 200;
         var y = canvasH / 2 - 250;
         var width = 400;
